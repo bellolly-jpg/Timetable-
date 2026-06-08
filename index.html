@@ -1,693 +1,492 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Liquid Glass Timetable</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olly's Timetable</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --surface: #1a1a1d;
+    --border: #2a2a2e;
+    --accent-a: #7effa0;
+    --accent-b: #7ec8ff;
+    --text: #f0f0f0;
+    --muted: #888;
+    --today: #ffffff10;
+  }
 
-    body {
-      min-height: 100vh;
-      background: radial-gradient(circle at 20% 30%, rgba(210, 230, 255, 0.6), rgba(160, 200, 250, 0.3)),
-                  linear-gradient(135deg, #cfe3ff 0%, #e2f0ff 100%);
-      backdrop-filter: blur(2px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      margin: 0;
-    }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* main glass container */
-    .glass-panel {
-      max-width: 850px;
-      width: 100%;
-      background: rgba(255, 255, 255, 0.35);
-      backdrop-filter: blur(14px) saturate(180%);
-      -webkit-backdrop-filter: blur(14px);
-      border-radius: 2.5rem;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 25px 45px -12px rgba(0, 20, 50, 0.25), inset 0 1px 0 rgba(255,255,255,0.6);
-      padding: 1.8rem 2rem;
-      transition: all 0.3s ease;
-    }
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1.5rem 4rem;
+  }
 
-    /* header & week badge */
-    .header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 1.8rem;
-      border-bottom: 1px solid rgba(80, 120, 200, 0.3);
-      padding-bottom: 1rem;
-    }
+  header {
+    margin-bottom: 2.5rem;
+  }
 
-    .title-section h1 {
-      font-size: 1.9rem;
-      font-weight: 600;
-      background: linear-gradient(125deg, #1a4972, #2c6e9e);
-      background-clip: text;
-      -webkit-background-clip: text;
-      color: transparent;
-      letter-spacing: -0.3px;
-      text-shadow: 0 1px 2px rgba(255,255,255,0.3);
-    }
+  .week-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
 
-    .week-badge {
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(4px);
-      padding: 0.45rem 1.2rem;
-      border-radius: 60px;
-      font-weight: 600;
-      font-size: 1.1rem;
-      border: 1px solid rgba(255,255,240,0.7);
-      color: #1f5e8e;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-    }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
 
-    .week-badge span {
-      font-weight: 800;
-      background: #1976b2;
-      padding: 0.1rem 0.6rem;
-      border-radius: 30px;
-      color: white;
-      margin-left: 8px;
-      font-size: 1rem;
-    }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
 
-    /* today's highlight + expand button */
-    .info-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 2rem;
-    }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
 
-    .today-label {
-      background: rgba(230, 245, 255, 0.7);
-      border-radius: 28px;
-      padding: 0.4rem 1.2rem;
-      font-weight: 500;
-      color: #155f8b;
-      backdrop-filter: blur(5px);
-      font-size: 0.9rem;
-      border: 1px solid rgba(255,255,255,0.6);
-    }
+  .week-label {
+    color: var(--accent);
+  }
 
-    .expand-btn {
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(120, 170, 230, 0.7);
-      padding: 0.6rem 1.4rem;
-      border-radius: 60px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #1c6e9e;
-      cursor: pointer;
-      transition: 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
+  .date-line {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
 
-    .expand-btn:hover {
-      background: rgba(255, 255, 255, 0.85);
-      border-color: #4c9fdb;
-      transform: scale(0.97);
-      box-shadow: 0 5px 12px rgba(60, 120, 200, 0.2);
-    }
+  /* Siri-readable hidden text */
+  .siri-summary {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+  }
 
-    /* timetable cards container */
-    .timetable-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1.1rem;
-      transition: 0.25s;
-    }
+  /* Today's lessons - shown prominently */
+  .today-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
 
-    /* lesson glass card */
-    .lesson-card {
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(8px);
-      border-radius: 1.8rem;
-      padding: 1rem 1.4rem;
-      border: 1px solid rgba(255,255,245,0.7);
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-    }
+  .today-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
 
-    .lesson-card:hover {
-      background: rgba(255, 255, 255, 0.7);
-      transform: translateY(-2px);
-      border-color: rgba(80, 160, 240, 0.5);
-    }
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
 
-    .lesson-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 0.6rem;
-    }
+  .lesson-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
 
-    .subject {
-      font-size: 1.4rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #1f5582, #2889c2);
-      background-clip: text;
-      -webkit-background-clip: text;
-      color: transparent;
-      letter-spacing: -0.2px;
-    }
+  .lesson {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--today);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
 
-    .time-slot {
-      font-family: 'SF Mono', monospace;
-      font-size: 0.85rem;
-      background: rgba(70, 130, 200, 0.15);
-      padding: 0.2rem 0.8rem;
-      border-radius: 20px;
-      font-weight: 500;
-      color: #1a6b9b;
-    }
+  .lesson:hover {
+    border-color: var(--accent);
+  }
 
-    .details {
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      font-size: 0.9rem;
-      color: #2c5a7a;
-      margin-top: 0.3rem;
-    }
+  .lesson-time {
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
 
-    .details span {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(245, 250, 255, 0.5);
-      padding: 0.2rem 0.9rem;
-      border-radius: 40px;
-    }
+  .lesson-subject {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+  }
 
-    .empty-state {
-      background: rgba(255,255,250,0.6);
-      backdrop-filter: blur(6px);
-      border-radius: 2rem;
-      padding: 2rem;
-      text-align: center;
-      font-weight: 500;
-      color: #2b6a97;
-      border: 1px dashed #7bb3db;
-    }
+  .lesson-room {
+    font-size: 0.72rem;
+    color: var(--accent);
+    text-align: right;
+    white-space: nowrap;
+  }
 
-    .other-days-section {
-      margin-top: 2rem;
-      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-    }
+  .lesson-teacher {
+    font-size: 0.72rem;
+    color: var(--muted);
+    grid-column: 2;
+    margin-top: -0.3rem;
+  }
 
-    .other-days-toggle {
-      background: rgba(255, 255, 255, 0.35);
-      border-radius: 2rem;
-      padding: 1.2rem;
-      backdrop-filter: blur(4px);
-    }
+  .lesson-grid-row {
+    display: contents;
+  }
 
-    .day-selector {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      justify-content: center;
-      margin-bottom: 1.5rem;
-    }
+  /* Full week grid */
+  .week-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 
-    .day-btn {
-      background: rgba(240, 248, 255, 0.7);
-      border: none;
-      padding: 0.45rem 1rem;
-      border-radius: 2rem;
-      font-weight: 600;
-      font-size: 0.8rem;
-      color: #236b97;
-      cursor: pointer;
-      transition: 0.15s;
-      backdrop-filter: blur(4px);
-      border: 0.5px solid rgba(255,255,255,0.8);
-    }
+  .day-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
 
-    .day-btn.active-day {
-      background: #3f9ad9;
-      color: white;
-      box-shadow: 0 4px 10px rgba(40, 100, 160, 0.3);
-      border-color: transparent;
-    }
+  .day-row.is-today {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent)22;
+  }
 
-    .day-btn:hover:not(.active-day) {
-      background: #cde5fe;
-      transform: translateY(-1px);
-    }
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    user-select: none;
+  }
 
-    .other-lessons-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-      max-height: 380px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
+  .day-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+  }
 
-    .mini-card {
-      background: rgba(255, 255, 255, 0.45);
-      border-radius: 1.4rem;
-      padding: 0.7rem 1rem;
-      border-left: 4px solid #449fdf;
-    }
+  .day-row.is-today .day-name {
+    color: var(--accent);
+  }
 
-    .mini-card .subject-mini {
-      font-weight: 700;
-      font-size: 1rem;
-      color: #124263;
-    }
+  .day-chevron {
+    color: var(--muted);
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+  }
 
-    .close-other {
-      text-align: right;
-      margin-top: 1rem;
-    }
+  .day-content {
+    display: none;
+    padding: 0 1rem 1rem;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
 
-    .close-other-btn {
-      background: none;
-      border: none;
-      font-size: 0.8rem;
-      color: #2b6e9e;
-      text-decoration: underline;
-      cursor: pointer;
-      font-weight: 500;
-    }
+  .day-content.open {
+    display: flex;
+  }
 
-    hr {
-      margin: 1rem 0;
-      border-color: rgba(100, 150, 200, 0.2);
-    }
+  .day-row.is-today .day-content {
+    display: flex;
+  }
 
-    footer {
-      margin-top: 1.5rem;
-      font-size: 0.7rem;
-      text-align: center;
-      color: #6489aa;
-      opacity: 0.7;
-    }
+  .mini-lesson {
+    display: grid;
+    grid-template-columns: 85px 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+  }
 
-    @media (max-width: 550px) {
-      .glass-panel {
-        padding: 1.3rem;
-      }
-      .subject {
-        font-size: 1.2rem;
-      }
-      .lesson-card {
-        padding: 0.8rem 1rem;
-      }
-    }
-  </style>
+  .mini-lesson:hover {
+    background: var(--today);
+  }
+
+  .mini-time { color: var(--muted); }
+  .mini-subject { font-weight: 500; }
+  .mini-room { color: var(--accent); text-align: right; }
+
+  .tab-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .week-panel { display: none; }
+  .week-panel.active { display: block; }
+</style>
 </head>
 <body>
-<div class="glass-panel" id="appRoot">
-  <div class="header">
-    <div class="title-section">
-      <h1>❄️ liquid flow · timetable</h1>
-    </div>
-    <div class="week-badge" id="weekBadge">
-      Week <span id="weekLetter">—</span>
-    </div>
-  </div>
 
-  <div class="info-bar">
-    <div class="today-label" id="todayLabel">📅 loading...</div>
-    <button class="expand-btn" id="expandViewBtn">🔍 explore other days ▾</button>
-  </div>
+<!-- Hidden Siri-readable summary at top of page -->
+<div id="siri-text" style="font-size:1.1rem; line-height:1.8; color:#f0f0f0; margin-bottom:2rem; padding:1rem; background:#1a1a1d; border-radius:12px;"></div>
 
-  <!-- main today's lessons container -->
-  <div id="todayLessonsContainer" class="timetable-container">
-    <!-- dynamic today lessons appear here -->
+<header>
+  <div class="week-badge">
+    <span class="dot" id="live-dot"></span>
+    <span id="live-label">Loading...</span>
   </div>
+  <h1>Week <span class="week-label" id="week-letter">...</span></h1>
+  <div class="date-line" id="date-line">—</div>
+</header>
 
-  <!-- expandable other-days panel (hidden initially) -->
-  <div id="otherDaysPanel" style="display: none;" class="other-days-section">
-    <div class="other-days-toggle">
-      <div class="day-selector" id="daySelector">
-        <!-- mon, tue, wed, thu, fri will be injected -->
-      </div>
-      <div id="otherLessonsList" class="other-lessons-list">
-        <!-- dynamic content for selected other day -->
-      </div>
-      <div class="close-other">
-        <button class="close-other-btn" id="closeOtherBtn">✖ collapse extra view</button>
-      </div>
-    </div>
-  </div>
-  <footer>liquid glass · today's focus · expand anytime</footer>
+<div class="tab-bar">
+  <button class="tab active" onclick="switchWeek('A')">Week A</button>
+  <button class="tab" onclick="switchWeek('B')">Week B</button>
 </div>
 
+<div id="week-A" class="week-panel active"></div>
+<div id="week-B" class="week-panel"></div>
+
 <script>
-  // ---------- TIMETABLE DATA (unchanged from original, Week A & B) ----------
-  const TIMETABLE = {
-    A: {
-      Mon: [
-        { time: "8:55 to 10", subject: "English", teacher: "Ms Liu", room: "202" },
-        { time: "10 to 11:05", subject: "Science", teacher: "Miss Grant", room: "104" },
-        { time: "11:25 to 12:30", subject: "Jewish History", teacher: "Mr Nagus", room: "502" },
-        { time: "1:10 to 2:15", subject: "Maths", teacher: "Mr Devan", room: "314" },
-        { time: "2:30 to 3:35", subject: "Art", teacher: "Mrs Chweidan", room: "209" },
-      ],
-      Tue: [
-        { time: "8:55 to 10", subject: "Limudei Kodesh", teacher: "Mr Kagan", room: "507" },
-        { time: "10 to 11:05", subject: "Geography", teacher: "Mr Cripps", room: "113" },
-        { time: "11:25 to 12:30", subject: "History", teacher: "Mr Webb", room: "110" },
-        { time: "1:10 to 2:15", subject: "Music", teacher: "Mrs Moore", room: "501" },
-        { time: "2:30 to 3:35", subject: "English", teacher: "Ms Liu", room: "202" },
-      ],
-      Wed: [
-        { time: "8:55 to 10", subject: "Maths", teacher: "Mr Devan", room: "314" },
-        { time: "10 to 11:05", subject: "IJE", teacher: "Mr Spector", room: "504" },
-        { time: "11:25 to 12:30", subject: "English", teacher: "Ms Liu", room: "202" },
-        { time: "1:10 to 2:15", subject: "Computing", teacher: "Mr Bronstein", room: "207" },
-        { time: "2:30 to 3:35", subject: "French", teacher: "Mrs Fernandes", room: "212" },
-      ],
-      Thu: [
-        { time: "8:55 to 10", subject: "Jewish History", teacher: "Mr Cohen", room: "105" },
-        { time: "10 to 11:05", subject: "History", teacher: "Mr Webb", room: "110" },
-        { time: "11:25 to 12:30", subject: "Ivrit", teacher: "Mrs Fialkov", room: "405" },
-        { time: "1:10 to 2:15", subject: "Drama", teacher: "Mrs Stimler", room: "109" },
-        { time: "2:30 to 3:35", subject: "PE", teacher: "Mr Farrell", room: "the gym" },
-      ],
-      Fri: [
-        { time: "8:40 to 9:45", subject: "PSHCE", teacher: "Ms Shaya", room: "206" },
-        { time: "9:45 to 10:50", subject: "Limudei Kodesh", teacher: "Mr Kagan", room: "507" },
-        { time: "11:20 to 12:25", subject: "Maths", teacher: "Mr Devan", room: "314" },
-        { time: "12:25 to 1:30", subject: "Science", teacher: "Miss Grant", room: "104" },
-      ],
-    },
-    B: {
-      Mon: [
-        { time: "8:55 to 10", subject: "English", teacher: "Ms Liu", room: "202" },
-        { time: "10 to 11:05", subject: "Maths", teacher: "Mr Devan", room: "314" },
-        { time: "11:25 to 12:30", subject: "French", teacher: "Mrs Fernandes", room: "212" },
-        { time: "1:10 to 2:15", subject: "Technology", teacher: "Mrs Cohen", room: "403" },
-        { time: "2:30 to 3:35", subject: "Science", teacher: "Miss Grant", room: "104" },
-      ],
-      Tue: [
-        { time: "8:55 to 10", subject: "PE", teacher: "Mr Farrell", room: "the gym" },
-        { time: "10 to 11:05", subject: "Technology", teacher: "Mrs Cohen", room: "403" },
-        { time: "11:25 to 12:30", subject: "Limudei Kodesh", teacher: "Mr Kagan", room: "507" },
-        { time: "1:10 to 2:15", subject: "Geography", teacher: "Mr Cripps", room: "113" },
-        { time: "2:30 to 3:35", subject: "Ivrit", teacher: "Mrs Fialkov", room: "405" },
-      ],
-      Wed: [
-        { time: "8:55 to 10", subject: "Art", teacher: "Mrs Chweidan", room: "209" },
-        { time: "10 to 11:05", subject: "Computing", teacher: "Mr Bronstein", room: "207" },
-        { time: "11:25 to 12:30", subject: "PE", teacher: "Mr Farrell", room: "the gym" },
-        { time: "1:10 to 2:15", subject: "Music", teacher: "Mrs Moore", room: "501" },
-        { time: "2:30 to 3:35", subject: "Geography", teacher: "Mr Cripps", room: "113" },
-      ],
-      Thu: [
-        { time: "8:55 to 10", subject: "English", teacher: "Ms Liu", room: "202" },
-        { time: "10 to 11:05", subject: "History", teacher: "Mr Webb", room: "110" },
-        { time: "11:25 to 12:30", subject: "Ivrit", teacher: "Mrs Fialkov", room: "405" },
-        { time: "1:10 to 2:15", subject: "Science", teacher: "Miss Grant", room: "104" },
-        { time: "2:30 to 3:35", subject: "Maths", teacher: "Mr Devan", room: "314" },
-      ],
-      Fri: [
-        { time: "8:40 to 9:45", subject: "PSHCE", teacher: "Ms Shaya", room: "206" },
-        { time: "9:45 to 10:50", subject: "Science", teacher: "Miss Grant", room: "104" },
-        { time: "11:20 to 12:25", subject: "Limudei Kodesh", teacher: "Mr Kagan", room: "507" },
-        { time: "12:25 to 1:30", subject: "French", teacher: "Mrs Fernandes", room: "212" },
-      ],
-    }
-  };
+const TIMETABLE = {
+  A: {
+    Mon: [
+      { time: "08:55–10:00", subject: "English", teacher: "Ms V Liu", room: "202" },
+      { time: "10:00–11:05", subject: "Science", teacher: "Miss L Grant", room: "104" },
+      { time: "11:25–12:30", subject: "Jewish History", teacher: "Mr T Nagus", room: "502" },
+      { time: "13:10–14:15", subject: "Maths", teacher: "Mr J Devan", room: "314" },
+      { time: "14:30–15:35", subject: "Art", teacher: "Mrs H Chweidan", room: "209" },
+    ],
+    Tue: [
+      { time: "08:55–10:00", subject: "Limudei Kodesh", teacher: "Mr B Kagan", room: "507" },
+      { time: "10:00–11:05", subject: "Geography", teacher: "Mr M Cripps", room: "113" },
+      { time: "11:25–12:30", subject: "History", teacher: "Mr D Webb", room: "110" },
+      { time: "13:10–14:15", subject: "Music", teacher: "Mrs J Moore", room: "501" },
+      { time: "14:30–15:35", subject: "English", teacher: "Ms V Liu", room: "202" },
+    ],
+    Wed: [
+      { time: "08:55–10:00", subject: "Maths", teacher: "Mr J Devan", room: "314" },
+      { time: "10:00–11:05", subject: "IJE", teacher: "Mr Y Spector", room: "504" },
+      { time: "11:25–12:30", subject: "English", teacher: "Ms V Liu", room: "202" },
+      { time: "13:10–14:15", subject: "Computing", teacher: "Mr A Bronstein", room: "207" },
+      { time: "14:30–15:35", subject: "French", teacher: "Mrs S Fernandes", room: "212" },
+    ],
+    Thu: [
+      { time: "08:55–10:00", subject: "Jewish History", teacher: "Mr M Cohen", room: "105" },
+      { time: "10:00–11:05", subject: "History", teacher: "Mr D Webb", room: "110" },
+      { time: "11:25–12:30", subject: "Ivrit", teacher: "Mrs N Fialkov", room: "405" },
+      { time: "13:10–14:15", subject: "Drama", teacher: "Mrs N Stimler", room: "109" },
+      { time: "14:30–15:35", subject: "PE", teacher: "Mr J Farrell", room: "GYM" },
+    ],
+    Fri: [
+      { time: "08:40–09:45", subject: "PSHCE", teacher: "Ms L Shaya", room: "206" },
+      { time: "09:45–10:50", subject: "Limudei Kodesh", teacher: "Mr B Kagan", room: "507" },
+      { time: "11:20–12:25", subject: "Maths", teacher: "Mr J Devan", room: "314" },
+      { time: "12:25–13:30", subject: "Science", teacher: "Miss L Grant", room: "104" },
+    ],
+  },
+  B: {
+    Mon: [
+      { time: "08:55–10:00", subject: "English", teacher: "Ms V Liu", room: "202" },
+      { time: "10:00–11:05", subject: "Maths", teacher: "Mr J Devan", room: "314" },
+      { time: "11:25–12:30", subject: "French", teacher: "Mrs S Fernandes", room: "212" },
+      { time: "13:10–14:15", subject: "Technology", teacher: "Mrs N Cohen", room: "403" },
+      { time: "14:30–15:35", subject: "Science", teacher: "Miss L Grant", room: "104" },
+    ],
+    Tue: [
+      { time: "08:55–10:00", subject: "PE", teacher: "Mr J Farrell", room: "GYM" },
+      { time: "10:00–11:05", subject: "Technology", teacher: "Mrs N Cohen", room: "403" },
+      { time: "11:25–12:30", subject: "Limudei Kodesh", teacher: "Mr B Kagan", room: "507" },
+      { time: "13:10–14:15", subject: "Geography", teacher: "Mr M Cripps", room: "113" },
+      { time: "14:30–15:35", subject: "Ivrit", teacher: "Mrs N Fialkov", room: "405" },
+    ],
+    Wed: [
+      { time: "08:55–10:00", subject: "Art", teacher: "Mrs H Chweidan", room: "209" },
+      { time: "10:00–11:05", subject: "Computing", teacher: "Mr A Bronstein", room: "207" },
+      { time: "11:25–12:30", subject: "PE", teacher: "Mr J Farrell", room: "GYM" },
+      { time: "13:10–14:15", subject: "Music", teacher: "Mrs J Moore", room: "501" },
+      { time: "14:30–15:35", subject: "Geography", teacher: "Mr M Cripps", room: "113" },
+    ],
+    Thu: [
+      { time: "08:55–10:00", subject: "English", teacher: "Ms V Liu", room: "202" },
+      { time: "10:00–11:05", subject: "History", teacher: "Mr D Webb", room: "110" },
+      { time: "11:25–12:30", subject: "Ivrit", teacher: "Mrs N Fialkov", room: "405" },
+      { time: "13:10–14:15", subject: "Science", teacher: "Miss L Grant", room: "104" },
+      { time: "14:30–15:35", subject: "Maths", teacher: "Mr J Devan", room: "314" },
+    ],
+    Fri: [
+      { time: "08:40–09:45", subject: "PSHCE", teacher: "Ms L Shaya", room: "206" },
+      { time: "09:45–10:50", subject: "Science", teacher: "Miss L Grant", room: "104" },
+      { time: "11:20–12:25", subject: "Limudei Kodesh", teacher: "Mr B Kagan", room: "507" },
+      { time: "12:25–13:30", subject: "French", teacher: "Mrs S Fernandes", room: "212" },
+    ],
+  }
+};
 
-  // ---------- week calculation (same anchor logic) ----------
-  const WEEK_A_ANCHOR = new Date('2026-06-01T00:00:00'); // Week A Monday
-  const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const DAY_FULL = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday' };
-  const WEEKDAY_KEYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+// ── Week A/B detection ──────────────────────────────────────────────
+// Set a known Week A Monday as the anchor date.
+// From the timetable, Week A starts on a known date — we'll use a reference.
+// The school year typically starts Week A. We anchor to 2025-09-01 (Mon) as Week A.
+const WEEK_A_ANCHOR = new Date('2026-06-01T00:00:00'); // 1 Jun 2026 = Week A Monday
 
-  function getWeekAB(date) {
-    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-    const monday = new Date(date);
-    monday.setHours(0,0,0,0);
-    const day = monday.getDay();
-    monday.setDate(monday.getDate() - (day === 0 ? 6 : day - 1));
-    const weeksSince = Math.round((monday - WEEK_A_ANCHOR) / msPerWeek);
-    return weeksSince % 2 === 0 ? 'A' : 'B';
-  }
+function getWeekAB(date) {
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const monday = new Date(date);
+  monday.setHours(0,0,0,0);
+  // Roll back to Monday
+  const day = monday.getDay();
+  monday.setDate(monday.getDate() - (day === 0 ? 6 : day - 1));
+  const weeksSinceAnchor = Math.round((monday - WEEK_A_ANCHOR) / msPerWeek);
+  return weeksSinceAnchor % 2 === 0 ? 'A' : 'B';
+}
 
-  // current date & week info
-  const today = new Date();
-  const currentWeek = getWeekAB(today);
-  const currentDayIndex = today.getDay(); // 0 sun ... 6 sat
-  const isWeekend = currentDayIndex === 0 || currentDayIndex === 6;
-  let currentDayKey = DAYS_SHORT[currentDayIndex];
-  // if weekend we want to still show weekday info? But per spec: weekend shows "no school" & preview of next week.
-  // But we keep main display showing weekend message, but expand button still works.
-  
-  // Helper: render main view (today lessons or weekend message)
-  function renderTodayView() {
-    const container = document.getElementById('todayLessonsContainer');
-    const weekLetterSpan = document.getElementById('weekLetter');
-    const todayLabelDiv = document.getElementById('todayLabel');
-    
-    weekLetterSpan.textContent = currentWeek;
-    const dayNameForLabel = DAY_FULL[currentDayKey] || (currentDayKey === 'Sat' ? 'Saturday' : 'Sunday');
-    
-    if (isWeekend) {
-      const nextWeek = currentWeek === 'A' ? 'B' : 'A';
-      todayLabelDiv.innerHTML = `🌙 Weekend · ${dayNameForLabel}`;
-      container.innerHTML = `
-        <div class="empty-state">
-          🧊 It's the weekend — no school today.<br>
-          ✨ Next week is <strong>Week ${nextWeek}</strong>. Use the expand button to explore weekly schedule.
-        </div>
-      `;
-      return;
-    }
-    
-    // regular weekday: show today's lessons
-    const lessonsForToday = TIMETABLE[currentWeek]?.[currentDayKey];
-    todayLabelDiv.innerHTML = `📖 ${DAY_FULL[currentDayKey]} · Week ${currentWeek}`;
-    
-    if (!lessonsForToday || lessonsForToday.length === 0) {
-      container.innerHTML = `<div class="empty-state">✨ No lessons found for today. Enjoy your day!</div>`;
-      return;
-    }
-    
-    let lessonsHTML = '';
-    lessonsForToday.forEach((lesson, idx) => {
-      lessonsHTML += `
-        <div class="lesson-card">
-          <div class="lesson-header">
-            <div class="subject">${escapeHtml(lesson.subject)}</div>
-            <div class="time-slot">⏱️ ${escapeHtml(lesson.time)}</div>
-          </div>
-          <div class="details">
-            <span>👩‍🏫 ${escapeHtml(lesson.teacher)}</span>
-            <span>📍 Room ${escapeHtml(lesson.room)}</span>
-          </div>
-        </div>
-      `;
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_FULL = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday' };
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ── Build UI ────────────────────────────────────────────────────────
+function buildWeekPanel(week) {
+  const panel = document.getElementById(`week-${week}`);
+  panel.innerHTML = '';
+  const todayDay = DAYS[new Date().getDay()];
+  const currentWeek = getWeekAB(new Date());
+
+  Object.entries(TIMETABLE[week]).forEach(([day, lessons]) => {
+    const isToday = day === todayDay && week === currentWeek;
+    const row = document.createElement('div');
+    row.className = 'day-row' + (isToday ? ' is-today' : '');
+
+    const header = document.createElement('div');
+    header.className = 'day-header';
+    header.innerHTML = `<span class="day-name">${DAY_FULL[day]}${isToday ? ' · TODAY' : ''}</span><span class="day-chevron" id="chev-${week}-${day}">▾</span>`;
+    header.onclick = () => toggle(week, day);
+
+    const content = document.createElement('div');
+    content.className = 'day-content' + (isToday ? ' open' : '');
+    content.id = `dc-${week}-${day}`;
+
+    lessons.forEach(l => {
+      const m = document.createElement('div');
+      m.className = 'mini-lesson';
+      m.innerHTML = `<span class="mini-time">${l.time}</span><span class="mini-subject">${l.subject}<br><span style="font-weight:400;color:var(--muted);font-size:0.7rem">${l.teacher}</span></span><span class="mini-room">${l.room}</span>`;
+      content.appendChild(m);
     });
-    container.innerHTML = lessonsHTML;
-  }
-  
-  // Helper to show other days for a given week/dayKey (used in expand panel)
-  function renderOtherDay(weekType, dayKey) {
-    const otherListDiv = document.getElementById('otherLessonsList');
-    const lessons = TIMETABLE[weekType]?.[dayKey];
-    if (!lessons || lessons.length === 0) {
-      otherListDiv.innerHTML = `<div class="empty-state" style="padding:1rem;">✨ No lessons scheduled for ${dayKey} Week ${weekType}</div>`;
-      return;
-    }
-    let html = '';
-    lessons.forEach(lesson => {
-      html += `
-        <div class="mini-card">
-          <div class="subject-mini">📘 ${escapeHtml(lesson.subject)}</div>
-          <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:0.75rem; margin-top:6px; color:#2b5e7c;">
-            <span>🕒 ${escapeHtml(lesson.time)}</span>
-            <span>🧑‍🏫 ${escapeHtml(lesson.teacher)}</span>
-            <span>🏠 ${escapeHtml(lesson.room)}</span>
-          </div>
-        </div>
-      `;
-    });
-    otherListDiv.innerHTML = html;
-  }
-  
-  // Setup the expandable panel: day buttons, update content based on selected day (default selected = today if weekday else Monday)
-  let currentOtherWeek = currentWeek; // expand panel uses same week context, but we allow week toggle? to be intuitive, we just use current timetable week but user can select any day
-  let selectedOtherDay = (isWeekend || !currentDayKey || currentDayIndex === 0 || currentDayIndex === 6) ? 'Mon' : currentDayKey;
-  
-  function buildDaySelectorAndRender() {
-    const selectorDiv = document.getElementById('daySelector');
-    if (!selectorDiv) return;
-    let btnsHtml = '';
-    WEEKDAY_KEYS.forEach(day => {
-      const activeClass = (selectedOtherDay === day) ? 'active-day' : '';
-      btnsHtml += `<button class="day-btn ${activeClass}" data-day="${day}">${day}</button>`;
-    });
-    selectorDiv.innerHTML = btnsHtml;
-    
-    // attach event listeners
-    document.querySelectorAll('.day-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const day = btn.getAttribute('data-day');
-        selectedOtherDay = day;
-        // re-render day selector styles + show lessons for selected day using currentOtherWeek (current week from live date)
-        buildDaySelectorAndRender();
-        renderOtherDay(currentOtherWeek, selectedOtherDay);
-      });
-    });
-    // Render initial other day lessons
-    renderOtherDay(currentOtherWeek, selectedOtherDay);
-  }
-  
-  // function to show/hide other panel (expand / collapse)
-  const otherPanel = document.getElementById('otherDaysPanel');
-  const expandBtn = document.getElementById('expandViewBtn');
-  const closeOtherBtn = document.getElementById('closeOtherBtn');
-  
-  function openOtherPanel() {
-    if (otherPanel.style.display === 'none' || !otherPanel.style.display) {
-      // before showing, ensure day selector and content built with current data
-      currentOtherWeek = getWeekAB(new Date()); // refresh week (in case midnight)
-      // compute default selected day: if today is weekend, default Monday; else today's daykey
-      const now = new Date();
-      const idx = now.getDay();
-      const isWeekNow = (idx === 0 || idx === 6);
-      let defaultDay = 'Mon';
-      if (!isWeekNow) {
-        const wkKey = DAYS_SHORT[idx];
-        if (wkKey && WEEKDAY_KEYS.includes(wkKey)) defaultDay = wkKey;
-      }
-      selectedOtherDay = defaultDay;
-      buildDaySelectorAndRender();
-      otherPanel.style.display = 'block';
-      // scroll into view smoothly
-      otherPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }
-  
-  function closeOtherPanel() {
-    otherPanel.style.display = 'none';
-  }
-  
-  expandBtn.addEventListener('click', openOtherPanel);
-  if (closeOtherBtn) closeOtherBtn.addEventListener('click', closeOtherPanel);
-  
-  // also if clicked outside? not needed, keep simple.
-  
-  // escape helper to avoid injection
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-      return c;
-    });
-  }
-  
-  // additional reactivity: if date changes at midnight? we keep on load, but also we could recalc but simplicity fine.
-  // also make sure that after expanding, if we click a day, it shows correct data.
-  // also add note: week badge updates dynamically if needed.
-  function refreshAll() {
-    // re-get current date values
-    const now = new Date();
-    const newWeek = getWeekAB(now);
-    const newDayIdx = now.getDay();
-    const newIsWeekend = newDayIdx === 0 || newDayIdx === 6;
-    // update global vars used in rendering today view
-    window.currentWeekGlobal = newWeek; // but we used const earlier, but we can reassign? simpler: we just re-run render with new computed values.
-    // we need to re-evaluate all.
-    const freshWeek = getWeekAB(now);
-    const freshDayKey = DAYS_SHORT[newDayIdx];
-    const freshIsWeekend = newDayIdx === 0 || newDayIdx === 6;
-    // update the dom
-    document.getElementById('weekLetter').textContent = freshWeek;
-    if (!freshIsWeekend) {
-      document.getElementById('todayLabel').innerHTML = `📖 ${DAY_FULL[freshDayKey]} · Week ${freshWeek}`;
-    } else {
-      document.getElementById('todayLabel').innerHTML = `🌙 Weekend · ${freshDayKey === 'Sat' ? 'Saturday' : 'Sunday'}`;
-    }
-    // render today's lessons based on fresh state
-    const container = document.getElementById('todayLessonsContainer');
-    if (freshIsWeekend) {
-      const nextWeek = freshWeek === 'A' ? 'B' : 'A';
-      container.innerHTML = `
-        <div class="empty-state">
-          🧊 It's the weekend — no school today.<br>
-          ✨ Next week is <strong>Week ${nextWeek}</strong>. Use the expand button to explore weekly schedule.
-        </div>
-      `;
-    } else {
-      const lessons = TIMETABLE[freshWeek]?.[freshDayKey];
-      if (!lessons || lessons.length === 0) {
-        container.innerHTML = `<div class="empty-state">✨ No lessons found for today.</div>`;
-      } else {
-        let html = '';
-        lessons.forEach(lesson => {
-          html += `
-            <div class="lesson-card">
-              <div class="lesson-header">
-                <div class="subject">${escapeHtml(lesson.subject)}</div>
-                <div class="time-slot">⏱️ ${escapeHtml(lesson.time)}</div>
-              </div>
-              <div class="details">
-                <span>👩‍🏫 ${escapeHtml(lesson.teacher)}</span>
-                <span>📍 Room ${escapeHtml(lesson.room)}</span>
-              </div>
-            </div>
-          `;
-        });
-        container.innerHTML = html;
-      }
-    }
-    // if panel open, refresh content using updated week data
-    if (otherPanel.style.display === 'block') {
-      currentOtherWeek = freshWeek;
-      // retain selectedOtherDay, but rebuild selector and render
-      buildDaySelectorAndRender();
-    }
-  }
-  
-  // initial render
-  renderTodayView();
-  // init other panel hidden and ensure internal state
-  otherPanel.style.display = 'none';
-  // attach real-time watch for date changes not needed but we can add a listener for visibility? but fine.
-  // if needed set an interval each minute? not needed, but we add option to refresh if needed: we keep simple.
-  // but when expand panel opens we use up-to-date week info anyway.
-  // manually patch any global mismatches (to ensure currentWeek const is same as computed)
-  window.addEventListener('load', () => {
-    // make sure after load, we sync up all variables if needed
-    const recomputedWeek = getWeekAB(new Date());
-    if (recomputedWeek !== currentWeek) {
-      refreshAll();
-    }
+
+    row.appendChild(header);
+    row.appendChild(content);
+    panel.appendChild(row);
   });
-  
-  // optional small timer? just to keep consistent, but it's static app, but fine.
-  // fix bug: weekday label for today when weekend we used earlier, but fine.
-  // also set tooltip for buttons
+}
+
+function toggle(week, day) {
+  const content = document.getElementById(`dc-${week}-${day}`);
+  const chev = document.getElementById(`chev-${week}-${day}`);
+  const open = content.classList.toggle('open');
+  chev.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+function switchWeek(w) {
+  document.querySelectorAll('.week-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`week-${w}`).classList.add('active');
+  document.querySelectorAll('.tab')[w === 'A' ? 0 : 1].classList.add('active');
+}
+
+// ── Init ────────────────────────────────────────────────────────────
+function init() {
+  const now = new Date();
+  const week = getWeekAB(now);
+  const dayIdx = now.getDay();
+  const dayName = DAYS[dayIdx];
+  const isWeekend = dayIdx === 0 || dayIdx === 6;
+
+  // Set accent color based on week
+  document.documentElement.style.setProperty('--accent', week === 'A' ? 'var(--accent-a)' : 'var(--accent-b)');
+
+  document.getElementById('week-letter').textContent = week;
+  document.getElementById('date-line').textContent = formatDate(now);
+  document.getElementById('live-label').textContent = `Week ${week} · Live`;
+
+  // Build both panels
+  buildWeekPanel('A');
+  buildWeekPanel('B');
+
+  // Make the correct week tab active
+  switchWeek(week);
+
+  // ── Siri-readable summary ──────────────────────────────────────────
+  let siriText = `Today is ${formatDate(now)}. This is Week ${week}. `;
+
+  if (isWeekend) {
+    siriText += `It's the weekend — no school today. `;
+    const nextDay = week === 'A' ? 'A' : 'B';
+    const monLessons = TIMETABLE[week].Mon;
+    siriText += `On Monday (Week ${nextDay}): ` + monLessons.map(l => `${l.subject} in room ${l.room}`).join(', ') + '.';
+  } else if (TIMETABLE[week][dayName]) {
+    const lessons = TIMETABLE[week][dayName];
+    siriText += `Today's lessons are: `;
+    siriText += lessons.map(l => `${l.subject} at ${l.time} in room ${l.room} with ${l.teacher}`).join('. ') + '.';
+  } else {
+    siriText += `No lessons found for today.`;
+  }
+
+  document.getElementById('siri-text').textContent = siriText;
+}
+
+init();
 </script>
 </body>
 </html>
