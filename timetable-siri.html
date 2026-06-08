@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Timetable</title>
+</head>
+<body>
+<p id="output">Loading...</p>
+<script>
+const TIMETABLE = {
+  A: {
+    Mon: [
+      { time: "8:55 to 10", subject: "English", teacher: "Ms Liu", room: "202" },
+      { time: "10 to 11:05", subject: "Science", teacher: "Miss Grant", room: "104" },
+      { time: "11:25 to 12:30", subject: "Jewish History", teacher: "Mr Nagus", room: "502" },
+      { time: "1:10 to 2:15", subject: "Maths", teacher: "Mr Devan", room: "314" },
+      { time: "2:30 to 3:35", subject: "Art", teacher: "Mrs Chweidan", room: "209" },
+    ],
+    Tue: [
+      { time: "8:55 to 10", subject: "Limudei Kodesh", teacher: "Mr Kagan", room: "507" },
+      { time: "10 to 11:05", subject: "Geography", teacher: "Mr Cripps", room: "113" },
+      { time: "11:25 to 12:30", subject: "History", teacher: "Mr Webb", room: "110" },
+      { time: "1:10 to 2:15", subject: "Music", teacher: "Mrs Moore", room: "501" },
+      { time: "2:30 to 3:35", subject: "English", teacher: "Ms Liu", room: "202" },
+    ],
+    Wed: [
+      { time: "8:55 to 10", subject: "Maths", teacher: "Mr Devan", room: "314" },
+      { time: "10 to 11:05", subject: "IJE", teacher: "Mr Spector", room: "504" },
+      { time: "11:25 to 12:30", subject: "English", teacher: "Ms Liu", room: "202" },
+      { time: "1:10 to 2:15", subject: "Computing", teacher: "Mr Bronstein", room: "207" },
+      { time: "2:30 to 3:35", subject: "French", teacher: "Mrs Fernandes", room: "212" },
+    ],
+    Thu: [
+      { time: "8:55 to 10", subject: "Jewish History", teacher: "Mr Cohen", room: "105" },
+      { time: "10 to 11:05", subject: "History", teacher: "Mr Webb", room: "110" },
+      { time: "11:25 to 12:30", subject: "Ivrit", teacher: "Mrs Fialkov", room: "405" },
+      { time: "1:10 to 2:15", subject: "Drama", teacher: "Mrs Stimler", room: "109" },
+      { time: "2:30 to 3:35", subject: "PE", teacher: "Mr Farrell", room: "the gym" },
+    ],
+    Fri: [
+      { time: "8:40 to 9:45", subject: "PSHCE", teacher: "Ms Shaya", room: "206" },
+      { time: "9:45 to 10:50", subject: "Limudei Kodesh", teacher: "Mr Kagan", room: "507" },
+      { time: "11:20 to 12:25", subject: "Maths", teacher: "Mr Devan", room: "314" },
+      { time: "12:25 to 1:30", subject: "Science", teacher: "Miss Grant", room: "104" },
+    ],
+  },
+  B: {
+    Mon: [
+      { time: "8:55 to 10", subject: "English", teacher: "Ms Liu", room: "202" },
+      { time: "10 to 11:05", subject: "Maths", teacher: "Mr Devan", room: "314" },
+      { time: "11:25 to 12:30", subject: "French", teacher: "Mrs Fernandes", room: "212" },
+      { time: "1:10 to 2:15", subject: "Technology", teacher: "Mrs Cohen", room: "403" },
+      { time: "2:30 to 3:35", subject: "Science", teacher: "Miss Grant", room: "104" },
+    ],
+    Tue: [
+      { time: "8:55 to 10", subject: "PE", teacher: "Mr Farrell", room: "the gym" },
+      { time: "10 to 11:05", subject: "Technology", teacher: "Mrs Cohen", room: "403" },
+      { time: "11:25 to 12:30", subject: "Limudei Kodesh", teacher: "Mr Kagan", room: "507" },
+      { time: "1:10 to 2:15", subject: "Geography", teacher: "Mr Cripps", room: "113" },
+      { time: "2:30 to 3:35", subject: "Ivrit", teacher: "Mrs Fialkov", room: "405" },
+    ],
+    Wed: [
+      { time: "8:55 to 10", subject: "Art", teacher: "Mrs Chweidan", room: "209" },
+      { time: "10 to 11:05", subject: "Computing", teacher: "Mr Bronstein", room: "207" },
+      { time: "11:25 to 12:30", subject: "PE", teacher: "Mr Farrell", room: "the gym" },
+      { time: "1:10 to 2:15", subject: "Music", teacher: "Mrs Moore", room: "501" },
+      { time: "2:30 to 3:35", subject: "Geography", teacher: "Mr Cripps", room: "113" },
+    ],
+    Thu: [
+      { time: "8:55 to 10", subject: "English", teacher: "Ms Liu", room: "202" },
+      { time: "10 to 11:05", subject: "History", teacher: "Mr Webb", room: "110" },
+      { time: "11:25 to 12:30", subject: "Ivrit", teacher: "Mrs Fialkov", room: "405" },
+      { time: "1:10 to 2:15", subject: "Science", teacher: "Miss Grant", room: "104" },
+      { time: "2:30 to 3:35", subject: "Maths", teacher: "Mr Devan", room: "314" },
+    ],
+    Fri: [
+      { time: "8:40 to 9:45", subject: "PSHCE", teacher: "Ms Shaya", room: "206" },
+      { time: "9:45 to 10:50", subject: "Science", teacher: "Miss Grant", room: "104" },
+      { time: "11:20 to 12:25", subject: "Limudei Kodesh", teacher: "Mr Kagan", room: "507" },
+      { time: "12:25 to 1:30", subject: "French", teacher: "Mrs Fernandes", room: "212" },
+    ],
+  }
+};
+
+// 8 June 2026 is a Week B Monday, so Week A anchor is one week later (15 June) or one week before (1 June)
+// We anchor to a known Week A Monday: 1 June 2026
+const WEEK_A_ANCHOR = new Date('2026-06-01T00:00:00');
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_FULL = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday' };
+
+function getWeekAB(date) {
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const monday = new Date(date);
+  monday.setHours(0,0,0,0);
+  const day = monday.getDay();
+  monday.setDate(monday.getDate() - (day === 0 ? 6 : day - 1));
+  const weeksSince = Math.round((monday - WEEK_A_ANCHOR) / msPerWeek);
+  return weeksSince % 2 === 0 ? 'A' : 'B';
+}
+
+const now = new Date();
+const week = getWeekAB(now);
+const dayKey = DAYS[now.getDay()];
+const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+
+let text = '';
+
+if (isWeekend) {
+  text = `It is the weekend. No school today. Next week is Week ${week === 'A' ? 'B' : 'A'}.`;
+} else if (TIMETABLE[week][dayKey]) {
+  const lessons = TIMETABLE[week][dayKey];
+  const dayName = DAY_FULL[dayKey];
+  text = `Today is ${dayName}, Week ${week}. You have ${lessons.length} lessons. `;
+  lessons.forEach((l, i) => {
+    text += `Lesson ${i + 1}: ${l.subject}, ${l.time}, room ${l.room}. `;
+  });
+} else {
+  text = `No timetable found for today.`;
+}
+
+document.getElementById('output').textContent = text;
+</script>
+</body>
+</html>
